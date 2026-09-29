@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BhashaLive</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#172033}
+.wrap{max-width:520px;margin:auto;min-height:100vh;padding:18px}
+header{padding:12px 0 18px}h1{margin:0;font-size:30px}p{color:#667085}
+.card{background:white;border-radius:22px;padding:18px;margin:14px 0;box-shadow:0 6px 25px #0000000d}
+label{display:block;font-size:13px;font-weight:bold;margin-bottom:7px}
+select,textarea,button{width:100%;border:1px solid #d9dee8;border-radius:14px;padding:13px;font-size:16px}
+textarea{min-height:105px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{border:0;background:#246bfe;color:white;font-weight:bold;margin-top:12px}
+button.secondary{background:#eef3ff;color:#246bfe}
+#out{min-height:90px;white-space:pre-wrap;font-size:18px}
+.mic{font-size:34px;text-align:center;padding:10px}
+.small{font-size:12px;color:#98a2b3}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="small">BhashaLive Prototype</div><h1>🌍 কথা বলুন, ভাষা বদলে শুনুন</h1><p>আপনার ভাষায় বলুন—অন্য ভাষায় শুনুন।</p></header>
+
+<div class="card">
+<div class="row">
+<div><label>আমি বলছি</label><select id="from">
+<option value="bn-BD">বাংলা</option><option value="en-US">English</option><option value="ar-SA">العربية</option>
+<option value="hi-IN">हिन्दी</option><option value="ur-PK">اردو</option><option value="es-ES">Español</option>
+<option value="fr-FR">Français</option><option value="de-DE">Deutsch</option>
+</select></div>
+<div><label>শুনতে চাই</label><select id="to">
+<option value="en-US">English</option><option value="bn-BD">বাংলা</option><option value="ar-SA">العربية</option>
+<option value="hi-IN">हिन्दी</option><option value="ur-PK">اردو</option><option value="es-ES">Español</option>
+<option value="fr-FR">Français</option><option value="de-DE">Deutsch</option>
+</select></div>
+</div>
+<div class="mic">🎙️</div>
+<textarea id="input" placeholder="এখানে লিখুন অথবা Voice বাটন চাপুন..."></textarea>
+<button onclick="listen()">🎤 Voice Input</button>
+<button onclick="translateText()">Translate</button>
+</div>
+
+<div class="card">
+<label>অনুবাদ</label>
+<div id="out">এখানে অনুবাদ দেখা যাবে</div>
+<button class="secondary" onclick="speak()">🔊 শুনুন</button>
+</div>
+
+<div class="card">
+<label>Conversation</label>
+<div id="history" class="small">এখনও কোনো কথোপকথন নেই।</div>
+</div>
+</div>
+
+<script>
+const dict={
+"hello":"হ্যালো","how are you":"আপনি কেমন আছেন?","thank you":"ধন্যবাদ","good morning":"সুপ্রভাত",
+"where are you going":"আপনি কোথায় যাচ্ছেন?","what is your name":"আপনার নাম কী?","i need help":"আমার সাহায্য দরকার"
+};
+let last="";
+function listen(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){alert("এই ফোন/ব্রাউজারে Voice Input সাপোর্ট নেই।");return}
+ const r=new SR(); r.lang=document.getElementById('from').value; r.interimResults=false;
+ r.onresult=e=>{document.getElementById('input').value=e.results[0][0].transcript};
+ r.start();
+}
+async function translateText(){
+ const input=document.getElementById('input').value.trim();
+ if(!input){alert("আগে কিছু বলুন বা লিখুন।");return}
+ const out=document.getElementById('out');
+ last=input;
+ const f=document.getElementById('from').value, t=document.getElementById('to').value;
+ if(f.startsWith("en") && t.startsWith("bn") && dict[input.toLowerCase()]) out.textContent=dict[input.toLowerCase()];
+ else if(f===t) out.textContent=input;
+ else out.textContent="Prototype: "+input+"\n\nআসল AI translation API যুক্ত করলে এখানে স্বয়ংক্রিয় অনুবাদ হবে।";
+ const h=document.getElementById('history');
+ if(h.textContent.includes("এখনও")) h.textContent="";
+ h.innerHTML += "<div style='margin:10px 0'><b>"+escapeHtml(input)+"</b><br>→ "+escapeHtml(out.textContent)+"</div>";
+}
+function speak(){
+ const text=document.getElementById('out').textContent;
+ if(!('speechSynthesis' in window)){alert("Text-to-Speech সাপোর্ট নেই।");return}
+ const u=new SpeechSynthesisUtterance(text);
+ u.lang=document.getElementById('to').value;
+ speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+</script>
+</body></html>
